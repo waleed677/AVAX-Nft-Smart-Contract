@@ -93,9 +93,17 @@ contract CaishenFinance is ERC721A, Ownable {
     uint256 public maxMintAmountPublic = 10;
     uint256 public nftPerAddressLimitWL = 100;
 
+    // Wallets to Withdraw
+     address payable main = payable(0x6b101Fdb6eCCf0Bbc093f83E3F5A13507E257FA9);
+     address payable secondary = payable(0x3452c37Dfb906F88d0bfE80e869b8A5aa8DD4786);
+
+    uint256 mainPercentage = 85000;
+    uint256 secondaryPercentage = 15000;
+    uint256 baseDivisor = 100000;
+
+
     bool public revealed = true;
     mapping(address => uint256) public addressMintedBalanceWL;
-    mapping(address => uint256) public addressMintedBalanceEarlyAccess;
     mapping(address => uint256) public addressMintedBalance;
 
     uint256 public currentState = 0;
@@ -270,11 +278,22 @@ contract CaishenFinance is ERC721A, Ownable {
     }
 
     function withdraw() public payable onlyOwner {
-        // This will payout the owner the contract balance.
+                // This will payout the owner the contract balance.
         // Do not remove this otherwise you will not be able to withdraw the funds.
         // =============================================================================
-        (bool os, ) = payable(owner()).call{value: address(this).balance}("");
-        require(os);
         // =============================================================================
+
+        uint256 totalBalance = address(this).balance;
+
+        (bool mp, ) = payable(main).call{
+            value: (totalBalance / baseDivisor) * mainPercentage
+        }("");
+        require(mp);
+
+        (bool sp, ) = payable(secondary).call{
+            value: (totalBalance / baseDivisor) * secondaryPercentage
+        }("");
+        require(sp);
+
     }
 }
