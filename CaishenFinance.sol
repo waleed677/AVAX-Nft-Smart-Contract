@@ -240,9 +240,6 @@ contract CaishenFinance is ERC721A, Ownable {
         baseExtension = _newBaseExtension;
     }
 
-    function setNotRevealedURI(string memory _notRevealedURI) public onlyOwner {
-        notRevealedUri = _notRevealedURI;
-    }
 
     function pause() public onlyOwner {
         currentState = 0;
