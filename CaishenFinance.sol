@@ -80,8 +80,20 @@ abstract contract Ownable is Context {
     }
 }
 
-contract CaishenFinance is ERC721A, Ownable {
+interface IERC2981Royalties {
+
+    function royaltyInfo(uint256 _tokenId, uint256 _value)
+        external
+        view
+        returns (address _receiver, uint256 _royaltyAmount);
+
+}
+
+contract CaishenFinance is ERC721A, Ownable, IERC2981Royalties {
     using Strings for uint256;
+
+    address royaltyOwner;
+    uint24 _royaltyAmount = 10000;
 
     string public baseURI;
     string public baseExtension = ".json";
@@ -94,8 +106,8 @@ contract CaishenFinance is ERC721A, Ownable {
     uint256 public nftPerAddressLimitWL = 100;
 
     // Wallets to Withdraw
-     address payable main = payable(0x6b101Fdb6eCCf0Bbc093f83E3F5A13507E257FA9);
-     address payable secondary = payable(0x3452c37Dfb906F88d0bfE80e869b8A5aa8DD4786);
+    address payable main = payable(0x6b101Fdb6eCCf0Bbc093f83E3F5A13507E257FA9);
+    address payable secondary = payable(0x3452c37Dfb906F88d0bfE80e869b8A5aa8DD4786);
 
     uint256 mainPercentage = 85000;
     uint256 secondaryPercentage = 15000;
@@ -114,7 +126,7 @@ contract CaishenFinance is ERC721A, Ownable {
         0xc117da44cd8e89da7f09c9c2110a9e74054f2a2de428605e8103ff2c1560c4df;
 
 
-    constructor() ERC721A("Caishen Finance ", "CNFT") {}
+    constructor(address _royaltyRecipient) ERC721A("Caishen Finance ", "CNFT") {}
 
     // internal
     function _baseURI() internal view virtual override returns (string memory) {
@@ -177,6 +189,21 @@ contract CaishenFinance is ERC721A, Ownable {
     {
         bytes32 leaf = keccak256(abi.encodePacked(_user));
         return MerkleProof.verify(_merkleProof, merkleRootWhitelist, leaf);
+    }
+
+    function setRoyalties(address recipient, uint256 value) public onlyOwner{
+    _setRoyalties(recipient, value);
+    }
+
+    function _setRoyalties(address recipient, uint256 value) internal {
+    require(value <= 100000, "Royalty Too high");
+    _royaltyAmount =  uint24(value);
+    royaltyOwner = recipient;
+    }
+
+    function royaltyInfo(uint256, uint256 value) external view override returns (address receiver, uint256 royaltyAmount) {
+    receiver = royaltyOwner;
+    royaltyAmount = (value * _royaltyAmount) / baseDivisor;
     }
 
     function mintableAmountForUser(address _user) public view returns (uint256) {
